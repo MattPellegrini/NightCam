@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#121824" />
+      <stop offset="100%" stop-color="#05080e" />
+    </linearGradient>
+
+    <!-- Glowing IR Lens Accent -->
+    <radialGradient id="irGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffaa00" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#ff7700" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#ff5500" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Moon/Aperture Gradient -->
+    <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d2ff" />
+      <stop offset="100%" stop-color="#007bff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base Canvas -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
+
+  <!-- Outer Camera Lens Ring -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#222f43" stroke-width="12" />
+  <circle cx="256" cy="256" r="140" fill="#0b1019" stroke="rgba(255,255,255,0.1)" stroke-width="4" />
+
+  <!-- Infrared LED Ring Dots -->
+  <circle cx="256" cy="136" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="341" cy="171" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="376" cy="256" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="341" cy="341" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="256" cy="376" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="171" cy="341" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="136" cy="256" r="8" fill="#ffaa00" opacity="0.9" />
+  <circle cx="171" cy="171" r="8" fill="#ffaa00" opacity="0.9" />
+
+  <!-- Center Lens Glow -->
+  <circle cx="256" cy="256" r="90" fill="url(#irGlow)" />
+
+  <!-- Crescent Moon Icon -->
+  <path d="M 270,186 A 70,70 0 1,0 326,298 A 58,58 0 1,1 270,186 Z" fill="url(#moonGrad)" />
+
+  <!-- Star Sparkle Accent -->
+  <path d="M 330,190 Q 330,205 345,205 Q 330,205 330,220 Q 330,205 315,205 Q 330,205 330,190 Z" fill="#ffffff" opacity="0.9" />
+</svg>

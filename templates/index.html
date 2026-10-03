@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NightCam</title>
+
+    <!-- Web App Manifest (Android / Chrome / PWA) -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Apple iOS / Safari Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NightCam">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+
+    <!-- Standard Favicons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Native WebRTC Video Player Container -->
+    <div class="video-container">
+        <video id="webRTCVideo" autoplay playsinline muted></video>
+    </div>
+
+    <!-- Floating Top-Right Overlay Controls -->
+    <div class="overlay-controls">
+        <!-- IR LED Toggle Button -->
+        <button id="irToggleBtn" class="icon-btn icon-off" onclick="toggleLight()" title="Toggle IR Light">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                <circle cx="12" cy="12" r="5"/>
+            </svg>
+        </button>
+
+        <!-- Fullscreen Toggle Button -->
+        <button class="icon-btn icon-fs" onclick="toggleFullScreen()" title="Toggle Fullscreen">
+            <svg viewBox="0 0 24 24">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Floating Decibel Overlay Badge (Bottom-Left) -->
+    <div class="db-badge">
+        <span id="dbText">-60 dB</span>
+        <div class="db-bar-bg">
+            <div id="dbBar" class="db-bar-fill"></div>
+        </div>
+    </div>
+
+    <!-- Settings Button & Popup Menu Container (Bottom-Right) -->
+    <div class="settings-btn-container">
+        <button class="icon-btn icon-fs" onclick="toggleSettingsMenu(event)" title="Settings">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.488.488 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+        </button>
+
+        <!-- Settings Popup Menu -->
+        <div class="settings-menu" id="settingsMenu">
+            <!-- Brightness Slider -->
+            <div class="menu-item slider-item">
+                <div class="slider-label">
+                    <span>Brightness</span>
+                    <span id="brightnessVal">100%</span>
+                </div>
+                <input type="range" id="brightnessRange" min="50" max="150" value="100" oninput="updateImageFilter()">
+            </div>
+
+            <!-- Contrast Slider -->
+            <div class="menu-item slider-item">
+                <div class="slider-label">
+                    <span>Contrast</span>
+                    <span id="contrastVal">100%</span>
+                </div>
+                <input type="range" id="contrastRange" min="50" max="150" value="100" oninput="updateImageFilter()">
+            </div>
+
+            <!-- Reset Filters Button -->
+            <button class="settings-btn" onclick="resetVideoFilters()">Reset Image Filters</button>
+
+            <hr class="menu-divider">
+
+            <!-- Audio Sensitivity Threshold Slider -->
+            <div class="menu-item slider-item">
+                <div class="slider-label">
+                    <span>Sound Threshold</span>
+                    <span id="thresholdVal">-35 dB</span>
+                </div>
+                <input type="range" id="thresholdRange" min="-45" max="-20" step="1" value="-35" onchange="updateThreshold(this.value)" oninput="document.getElementById('thresholdVal').innerText = this.value + ' dB'">
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Video Element for Fallback Keep-Alive Engine -->
+    <video id="noSleepVideo" loop playsinline muted></video>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

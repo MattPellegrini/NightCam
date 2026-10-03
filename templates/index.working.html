@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Baby Monitor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            position: fixed;
+        }
+        
+        /* 1. Fullscreen Video Container (Spans whole screen behind controls) */
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            object-fit: cover; 
+        }
+
+        /* 2. Floating Icon Controls (Overlaps directly on top of video) */
+        .overlay-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Dynamic button state styles */
+        .icon-off {
+            background: rgba(108, 117, 125, 0.6); /* Translucent Grey */
+            color: #fff;
+        }
+
+        .icon-on-yellow {
+            background: rgba(255, 193, 7, 0.9);   /* Warm Yellow */
+            color: #000;                           /* Dark icon for contrast */
+        }
+
+        .icon-fs {
+            background: rgba(255, 255, 255, 0.25);
+            color: #fff;
+        }
+
+        /* Invisible video loop for mobile keep-alive fallback */
+        #noSleepVideo {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Video feed filling 100% viewport width & height -->
+    <div class="video-container" id="videoBox">
+        <iframe id="streamFrame" allowfullscreen></iframe>
+    </div>
+
+    <!-- Floating SVG Icon Buttons overlapping top-right corner -->
+    <div class="overlay-controls">
+        <!-- Fullscreen Toggle Button -->
+        <button class="icon-btn icon-fs" onclick="toggleFullScreen()" title="Full Screen">
+            <svg viewBox="0 0 24 24">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+        </button>
+
+        <!-- Single Dynamic IR Toggle Button (Bulb) -->
+        <button id="irToggleBtn" class="icon-btn icon-off" onclick="toggleLight()" title="Toggle IR Light">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7zm-3 18a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/>
+            </svg>
+        </button>
+    </div>
+
+    <video id="noSleepVideo" loop playsinline muted>
+        <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAdtZGF0AAAAAA==" type="video/mp4">
+    </video>
+
+    <script>
+        // 1. Set iframe src to MediaMTX WebRTC stream
+        document.getElementById('streamFrame').src = 'http://' + window.location.hostname + ':8889/cam';
+
+        // 2. Track and Toggle IR Light State
+        let currentIrState = false;
+
+        function toggleLight() {
+            const nextAction = currentIrState ? 'off' : 'on';
+            fetch(`/light/${nextAction}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    currentIrState = (data.light === 'ON');
+                    updateIrButtonUI(currentIrState);
+                })
+                .catch(err => console.error('Error toggling light:', err));
+        }
+
+        function updateIrButtonUI(isOn) {
+            const btn = document.getElementById('irToggleBtn');
+            if (isOn) {
+                btn.classList.remove('icon-off');
+                btn.classList.add('icon-on-yellow');
+            } else {
+                btn.classList.remove('icon-on-yellow');
+                btn.classList.add('icon-off');
+            }
+        }
+
+        // 3. True Native Fullscreen Trigger
+        function toggleFullScreen() {
+            const elem = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* iOS / Safari */
+                    elem.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        // 4. Keep Screen Alive (API + Video Fallback)
+        async function enableKeepAwake() {
+            if ('wakeLock' in navigator) {
+                try {
+                    await navigator.wakeLock.request('screen');
+                    return;
+                } catch (err) {}
+            }
+
+            const noSleepVid = document.getElementById('noSleepVideo');
+            if (noSleepVid) {
+                const playVid = () => {
+                    noSleepVid.play().catch(() => {});
+                    document.removeEventListener('click', playVid);
+                    document.removeEventListener('touchstart', playVid);
+                };
+                document.addEventListener('click', playVid);
+                document.addEventListener('touchstart', playVid);
+            }
+        }
+
+        enableKeepAwake();
+    </script>
+</body>
+</html>

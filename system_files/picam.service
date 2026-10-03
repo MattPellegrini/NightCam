@@ -1,0 +1,13 @@
+[Unit]
+Description=PiCam MediaMTX & IR Audio Trigger Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/start_camera.sh
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

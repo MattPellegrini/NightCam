@@ -1,0 +1,146 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Set iframe src to MediaMTX WebRTC stream
+    document.getElementById('streamFrame').src = 'http://' + window.location.hostname + ':8889/cam';
+
+    // 2. Poll Decibel Level from Flask
+    setInterval(updateAudioMeter, 250);
+
+    // 3. Screen Wake Lock listeners
+    document.addEventListener('click', initNoSleep);
+    document.addEventListener('touchstart', initNoSleep);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            requestWakeLock();
+        }
+    });
+
+    requestWakeLock();
+});
+
+// Settings Menu Popup Toggle
+function toggleSettingsMenu(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('settingsMenu');
+    menu.classList.toggle('active');
+}
+
+// Close settings menu when clicking outside
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('settingsMenu');
+    const btnContainer = document.querySelector('.settings-btn-container');
+    if (menu && menu.classList.contains('active') && !btnContainer.contains(e.target)) {
+        menu.classList.remove('active');
+    }
+});
+
+// Combined Image Filters (Grayscale, Brightness, Contrast)
+function updateImageFilter() {
+    const isGrayscale = document.getElementById('grayscaleToggle').checked;
+    const brightness = document.getElementById('brightnessRange').value;
+    const contrast = document.getElementById('contrastRange').value;
+
+    // Update readout values in settings UI
+    document.getElementById('brightnessVal').innerText = `${brightness}%`;
+    document.getElementById('contrastVal').innerText = `${contrast}%`;
+
+    // Build CSS filter rule
+    let filterString = `brightness(${brightness}%) contrast(${contrast}%)`;
+    if (isGrayscale) {
+        filterString += ` grayscale(100%)`;
+    }
+
+    document.getElementById('streamFrame').style.filter = filterString;
+}
+
+// Track and Toggle IR Light State
+let currentIrState = false;
+
+function toggleLight() {
+    const nextAction = currentIrState ? 'off' : 'on';
+    fetch(`/light/${nextAction}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            currentIrState = (data.light === 'ON');
+            updateIrButtonUI(currentIrState);
+        })
+        .catch(err => console.error('Error toggling light:', err));
+}
+
+function updateIrButtonUI(isOn) {
+    const btn = document.getElementById('irToggleBtn');
+    if (isOn) {
+        btn.classList.remove('icon-off');
+        btn.classList.add('icon-on-yellow');
+    } else {
+        btn.classList.remove('icon-on-yellow');
+        btn.classList.add('icon-off');
+    }
+}
+
+// True Native Fullscreen Trigger
+function toggleFullScreen() {
+    const elem = document.documentElement;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+}
+
+// Decibel Polling
+function updateAudioMeter() {
+    fetch('/audio/level')
+        .then(res => res.json())
+        .then(data => {
+            const dbText = document.getElementById('dbText');
+            const dbBar = document.getElementById('dbBar');
+
+            dbText.innerText = `${data.rms_db} dB`;
+
+            const minDb = -60;
+            const maxDb = 0;
+            let percent = ((data.rms_db - minDb) / (maxDb - minDb)) * 100;
+            percent = Math.max(0, Math.min(100, percent));
+
+            dbBar.style.width = `${percent}%`;
+
+            if (data.triggered) {
+                dbBar.classList.add('db-triggered');
+            } else {
+                dbBar.classList.remove('db-triggered');
+            }
+        })
+        .catch(() => {});
+}
+
+// Reliable Screen Wake Lock & Interaction Keep-Alive
+let wakeLock = null;
+
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Screen Wake Lock active');
+        } catch (err) {
+            console.warn('Wake lock error:', err);
+        }
+    }
+}
+
+function initNoSleep() {
+    const noSleepVid = document.getElementById('noSleepVideo');
+    if (noSleepVid) {
+        noSleepVid.play().then(() => {
+            console.log('Keep-alive loop active');
+        }).catch(() => {});
+    }
+    requestWakeLock();
+}

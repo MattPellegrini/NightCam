@@ -1,0 +1,30 @@
+# Virtual Environment
+
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg/
+pyvenv.cfg
+*.venv
+env/
+venv/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary IPC / Runtime Pipes
+/tmp/
+*.pipe
+
+# IDE & OS Junk
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment & Secrets (if added in future)
+.env

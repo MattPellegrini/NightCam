@@ -1,0 +1,271 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    position: fixed;
+}
+
+.video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+/* Virtual Fullscreen Mode */
+.video-container.virtual-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+}
+
+video#webRTCVideo {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: cover;
+    transition: filter 0.2s ease;
+}
+
+/* Floating Icon Controls (Top-Right) */
+.overlay-controls {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 8px 12px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.icon-btn {
+    position: relative;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.icon-btn:active {
+    transform: scale(0.92);
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* Dynamic Button States */
+.icon-off {
+    background: rgba(108, 117, 125, 0.6);
+    color: #fff;
+}
+
+.icon-on-yellow {
+    background: rgba(255, 193, 7, 0.9);
+    color: #000;
+}
+
+/* Sound-Triggered "AUTO" Badge Overlay */
+.icon-auto::after {
+    content: "AUTO";
+    position: absolute;
+    bottom: -3px;
+    right: -5px;
+    background: #007bff;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 800;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 2px 4px;
+    border-radius: 6px;
+    border: 1px solid #000;
+    line-height: 1;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.icon-fs {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+/* Floating Decibel Overlay Badge (Bottom-Left) */
+.db-badge {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: monospace;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.db-bar-bg {
+    width: 60px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.db-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #28a745;
+    transition: width 0.15s ease, background-color 0.15s ease;
+}
+
+.db-triggered {
+    background: #dc3545 !important;
+}
+
+/* Settings Button & Menu Popup (Bottom-Right) */
+.settings-btn-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.settings-menu {
+    position: absolute;
+    bottom: 54px;
+    right: 0;
+    width: 220px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    padding: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 11;
+}
+
+.settings-menu.active {
+    display: flex;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.menu-item.slider-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+
+.slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Settings Menu Action Button */
+.settings-btn {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.settings-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.menu-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 2px 0;
+}
+
+/* Custom Range Input Sliders */
+.menu-item input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+}
+
+.menu-item input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #28a745;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.menu-item input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #28a745;
+    cursor: pointer;
+    border: none;
+}
+
+/* Hidden Fallback Video Loop */
+#noSleepVideo {
+    display: none;
+}
