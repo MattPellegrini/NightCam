@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Screen Wake Lock & Interaction listeners
     document.addEventListener('click', initNoSleep);
     document.addEventListener('touchstart', initNoSleep);
+
+    // 4. Global Auto Unmute on First Touch/Click
+    document.addEventListener('click', attemptAutoUnmute, { once: true });
+    document.addEventListener('touchstart', attemptAutoUnmute, { once: true });
+
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             requestWakeLock();
@@ -37,15 +42,16 @@ async function startWHEPStream() {
 
     peerConnection = new RTCPeerConnection();
 
-    // Attach incoming WebRTC media stream to <video> tag
+    // Attach incoming WebRTC media stream (video + audio) to <video> element
     peerConnection.ontrack = (evt) => {
         if (evt.streams && evt.streams[0]) {
             videoEl.srcObject = evt.streams[0];
         }
     };
 
-    // Request receive-only video stream
+    // Request BOTH video AND audio receive tracks from MediaMTX
     peerConnection.addTransceiver('video', { direction: 'recvonly' });
+    peerConnection.addTransceiver('audio', { direction: 'recvonly' });
 
     try {
         const offer = await peerConnection.createOffer();
@@ -65,19 +71,68 @@ async function startWHEPStream() {
 
         const answerSdp = await response.text();
         await peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
-        console.log('Native WHEP WebRTC stream connected.');
+        console.log('Native WHEP WebRTC stream connected (Video + Audio).');
     } catch (err) {
         console.warn('WHEP connection failed, retrying in 3 seconds...', err);
         setTimeout(startWHEPStream, 3000);
     }
 
-    // Monitor connection state and auto-reconnect on drops
     peerConnection.onconnectionstatechange = () => {
         if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
             console.warn('WebRTC state changed to:', peerConnection.connectionState, '- Reconnecting...');
             setTimeout(startWHEPStream, 2000);
         }
     };
+}
+
+// --- Audio Mute / Unmute & UI Logic ---
+function attemptAutoUnmute() {
+    const videoEl = document.getElementById('webRTCVideo');
+    if (videoEl && videoEl.muted) {
+        videoEl.muted = false;
+        videoEl.play().then(() => {
+            updateAudioButtonUI(false);
+            console.log('Audio successfully unmuted on first user interaction.');
+        }).catch(() => {
+            // Keep muted alert UI if browser blocks unmuting
+            updateAudioButtonUI(true);
+        });
+    }
+}
+
+function updateAudioButtonUI(isMuted) {
+    const audioBtn = document.getElementById('audioToggleBtn');
+    const mutedIcon = document.getElementById('audioMutedIcon');
+    const unmutedIcon = document.getElementById('audioUnmutedIcon');
+
+    if (!audioBtn) return;
+
+    if (isMuted) {
+        // Red Alert State with "!" badge
+        audioBtn.classList.remove('icon-on-yellow', 'icon-off');
+        audioBtn.classList.add('icon-muted-alert');
+        if (mutedIcon) mutedIcon.style.display = 'block';
+        if (unmutedIcon) unmutedIcon.style.display = 'none';
+    } else {
+        // Yellow Active State (Matches IR Light ON)
+        audioBtn.classList.remove('icon-muted-alert', 'icon-off');
+        audioBtn.classList.add('icon-on-yellow');
+        if (mutedIcon) mutedIcon.style.display = 'none';
+        if (unmutedIcon) unmutedIcon.style.display = 'block';
+    }
+}
+
+function toggleAudio() {
+    const videoEl = document.getElementById('webRTCVideo');
+    if (!videoEl) return;
+
+    videoEl.muted = !videoEl.muted;
+
+    if (!videoEl.muted) {
+        videoEl.play().catch(err => console.warn('Audio play request failed:', err));
+    }
+
+    updateAudioButtonUI(videoEl.muted);
 }
 
 // --- Settings Menu Popup ---
